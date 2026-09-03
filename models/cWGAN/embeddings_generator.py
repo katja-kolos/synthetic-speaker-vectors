@@ -1,0 +1,57 @@
+import torch
+
+from cWGAN.init_cwgan import create_wgan
+
+
+class EmbeddingsGenerator:
+
+    def __init__(self, gan_path, device):
+        self.device = device
+        self.gan_path = gan_path
+
+        self.mean = None
+        self.std = None
+        self.wgan = None
+
+        self._load_model(self.gan_path)
+
+    def generate_embeddings(self, labels=None):
+        if labels is None:
+            labels = torch.LongTensor([0,1]*500)
+        generated_samples = self.wgan.sample_generator(
+            labels=labels, 
+            nograd=True, 
+            return_intermediate=False).cpu()
+        return self._inverse_normalize(generated_samples)
+    
+    def generate_embeddings_without_normalization(self, labels=None):
+        if labels is None:
+            labels = torch.LongTensor([0,1]*500)
+        generated_samples = self.wgan.sample_generator(
+            labels=labels, 
+            nograd=True, 
+            return_intermediate=False).cpu()
+        return generated_samples
+
+    def _load_model(self, path):
+        gan_checkpoint = torch.load(path, map_location="cpu")
+
+        self.wgan = create_wgan(parameters=gan_checkpoint['model_parameters'], device=self.device)
+        self.wgan.G.load_state_dict(gan_checkpoint['generator_state_dict'])
+        self.wgan.D.load_state_dict(gan_checkpoint['critic_state_dict'])
+
+        mean_key, std_key = 'mean', 'std' # quick fix for different VPC code version: 'dataset_mean', 'dataset_std'
+
+        for k in gan_checkpoint.keys():
+            if 'mean' in k:
+                mean_key = k
+            if 'std' in k:
+                std_key = k
+
+        self.mean = gan_checkpoint[mean_key]
+        self.std = gan_checkpoint[std_key]
+
+        # print(f"Dimensions: {gan_checkpoint['model_parameters']['data_dim']}. Mean: {self.mean}. Std: {self.std}")
+
+    def _inverse_normalize(self, tensor):
+        return tensor * self.std + self.mean

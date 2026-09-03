@@ -1,0 +1,1 @@
+from WGAN.embeddings_generator import EmbeddingsGenerator

@@ -1,0 +1,1 @@
+from Diffusion.embeddings_generator import EmbeddingsGenerator
