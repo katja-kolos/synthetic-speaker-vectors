@@ -1,0 +1,4 @@
+[submodule "Voice-Privacy-Challenge-2024"]
+	path = Voice-Privacy-Challenge-2024
+	url = https://github.com/katja-kolos/Voice-Privacy-Challenge-2024.git
+	branch = sttts-attr
